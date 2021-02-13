@@ -28,8 +28,10 @@ _asdf_cached_envrc() {
   env_file="$dump_dir/$tools_cksum"
 
   if [ -f "$env_file" ]; then
-    echo "$env_file"
-    return 0
+    if [ "$(_watched_files_changed "$env_file")" = "0" ]; then
+      echo "$env_file"
+      return 0
+    fi
   fi
 
   _load_asdf_utils
@@ -40,6 +42,23 @@ _asdf_cached_envrc() {
 
   _asdf_envrc "$tools_file" | _no_dups >"$env_file"
   echo "$env_file"
+}
+
+_watched_files_changed() {
+  local env_file="$1"
+  local file known_mtime
+  local changed=()
+
+  while IFS=$'\n' read -r -a watched_file; do
+    read -r -a file_and_mtime <<< "${watched_file[0]}"
+    file="${file_and_mtime[1]}"
+    known_mtime="${file_and_mtime[2]:1}"
+    if [ "$known_mtime" != "$(_mtime "$file")" ]; then
+      changed+=("$file")
+    fi
+  done <<<"$(_tgrep "^watch_file " "$env_file")"
+
+  echo ${#changed[@]}
 }
 
 _asdf_envrc() {
@@ -54,6 +73,12 @@ _cksum() {
   # working directory, the arguments given to use_asdf, direnv status, and the tools-version modification times.
   # shellcheck disable=SC2154 # var is referenced but not assigned.
   cksum <(pwd) <(echo "$@") <("$direnv" status) <(test -f "$file" && ls -l "$file") | cut -d' ' -f 1 | tr $'\n' '-' | sed -e 's/-$//'
+}
+
+_mtime() {
+  # modification time of a file in unix timestamp format
+  local file="$1"
+  [ -f "$file" ] && date -r "$file" +%s
 }
 
 _tgrep() {
@@ -139,7 +164,7 @@ _load_plugin_version_and_file() {
     _plugin_env_bash "$plugin_name" "$version"
   done
   if [ -f "$path" ]; then
-    echo watch_file "$path"
+    echo watch_file "$path #$(_mtime "$path")"
   fi
 }
 
