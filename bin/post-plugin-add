@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+# Adds hooks to keep an up-to-date list of supported legacy filenames
+# in a file, and generate the first vestion of such file
+
+CONFIG="${ASDF_CONFIG_FILE:-$HOME/.asdfrc}"
+
+if [ ! -f "$CONFIG" ]; then
+  mkdir -p "$(dirname "$CONFIG")" && touch "$CONFIG"
+fi
+
+# remove traces from previous installations
+sed -e '/#asdf-direnv/d' "$CONFIG" > "${CONFIG}.new"
+mv "${CONFIG}.new" "$CONFIG"
+
+read -r -d '' HOOKS <<EOF
+post_asdf_plugin_add = asdf direnv _store_legacy_filenames #asdf-direnv
+post_asdf_plugin_remove = asdf direnv _store_legacy_filenames #asdf-direnv
+EOF
+
+# insert before other existing hooks, in case they want to use
+# our legacy filenames file
+LINE=$(grep -n -m 1 -E '^(pre|post)_asdf_plugin' "$CONFIG" | cut -f1 -d:)
+if [ -n "$LINE" ]; then
+  awk -v n="$LINE" -v s="$HOOKS" 'NR==n {print s} 1' < "$CONFIG" > "${CONFIG}.new"
+  mv "${CONFIG}.new" "$CONFIG"
+else
+  printf "%s" "$HOOKS" >> "$CONFIG"
+fi
+
+# run the hook to generate the legacy filenames file!
+asdf direnv _store_legacy_filenames > /dev/null 2>&1

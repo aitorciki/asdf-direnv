@@ -174,6 +174,11 @@ _plugin_env_bash() {
   _path_changed_entries "$old_path" "$new_path" | _tail_r | _each_do echo PATH_add
 }
 
+# shellcheck disable=SC1090
+if [ -f "$(dirname "${BASH_SOURCE[0]}")/extensions.bash" ]; then
+  source "$(dirname "${BASH_SOURCE[0]}")/extensions.bash"
+fi
+
 case "$1" in
   "_"*)
     "$@"

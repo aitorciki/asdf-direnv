@@ -152,6 +152,19 @@ direnv: using asdf nodejs 12.6.0
 direnv: export +MIX_ARCHIVES +MIX_HOME +NPM_CONFIG_PREFIX ~PATH
 ```
 
+##### Extensions
+
+###### Legacy files support in cached environment
+
+To make the cached environment react to changes in asdf legacy files others than `.tool-versions` (like `.node-version` and others), asdf hooks are installed to keep a list of supported legacy files that will be checked for changes on environment activation.
+
+The hooks will be automatically added to `~/.asdfrc` upon installation:
+
+```
+post_asdf_plugin_add = asdf direnv _store_legacy_filenames #asdf-direnv
+post_asdf_plugin_remove = asdf direnv _store_legacy_filenames #asdf-direnv
+```
+
 ## Benchmark
 
 ![benchmark](https://user-images.githubusercontent.com/38746192/67657932-8483fb80-f99b-11e9-96d8-3d46d419ea62.png)

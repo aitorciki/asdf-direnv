@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+# Deletes hooks to keep legacy filenames file updated
+
+CONFIG="${ASDF_CONFIG_FILE:-$HOME/.asdfrc}"
+
+if [ ! -f "$CONFIG" ]; then
+  exit 1
+fi
+
+sed -e '/#asdf-direnv/d' "$CONFIG" > "${CONFIG}.new"
+mv "${CONFIG}.new" "$CONFIG"
