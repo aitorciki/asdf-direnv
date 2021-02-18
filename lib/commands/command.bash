@@ -3,9 +3,23 @@
 # Exit on error, since this is an executable an not a sourced file.
 set -eo pipefail
 
+# Never failing find
+_tfind() {
+  find "$@" 2>/dev/null || true
+}
+
+# manually select latest direnv installed to avoid calling slow asdf helpers
+if [ "$ASDF_DIRENV_FORCE_LATEST" ]; then
+  ASDF_DIRENV_DATA_DIR="$(_tfind "${ASDF_DATA_DIR:-$HOME/.asdf}/installs/direnv" -maxdepth 1 -mindepth 1 | sort -Vr | head -1)"
+fi
+
 # Load direnv stdlib if not already loaded
 if [ -z "$(declare -f -F watch_file)" ]; then
-  eval "$(asdf exec direnv stdlib)"
+  if [ -n "$ASDF_DIRENV_DATA_DIR" ]; then
+    eval "$("$ASDF_DIRENV_DATA_DIR"/bin/direnv stdlib)"
+  else
+    eval "$(asdf exec direnv stdlib)"
+  fi
 fi
 
 _load_asdf_utils() {
@@ -22,7 +36,11 @@ _load_asdf_utils() {
 
 _asdf_cached_envrc() {
   local dump_dir tools_file tools_cksum env_file
-  dump_dir="$(asdf where direnv)/env"
+  if [ -n "$ASDF_DIRENV_DATA_DIR" ]; then
+    dump_dir="$ASDF_DIRENV_DATA_DIR/env"
+  else
+    dump_dir="$(asdf where direnv)/env"
+  fi
   tools_file="$(_local_versions_file)"
   tools_cksum="$(_cksum "$tools_file" "$@")"
   env_file="$dump_dir/$tools_cksum"

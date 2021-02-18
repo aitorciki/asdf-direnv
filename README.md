@@ -165,6 +165,10 @@ post_asdf_plugin_add = asdf direnv _store_legacy_filenames #asdf-direnv
 post_asdf_plugin_remove = asdf direnv _store_legacy_filenames #asdf-direnv
 ```
 
+###### Faster startup avoiding asdf commands
+
+By setting the environment variable `ASDF_DIRENV_FORCE_LATEST` to a non-empty value, `asdf-direnv` will directly invoke the latest installed `direnv` avoiding the asdf indirection, squeezing a few precious milliseconds in older hardware.
+
 ## Benchmark
 
 ![benchmark](https://user-images.githubusercontent.com/38746192/67657932-8483fb80-f99b-11e9-96d8-3d46d419ea62.png)
